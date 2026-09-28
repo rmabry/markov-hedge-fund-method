@@ -11,3 +11,5 @@ __pycache__/
 .coverage
 htmlcov/
 .test-tmp/
+# Local browser evidence may include account UI; do not publish it with source.
+docs/evidence/
