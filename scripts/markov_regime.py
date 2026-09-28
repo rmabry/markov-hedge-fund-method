@@ -1,10 +1,10 @@
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["numpy", "pandas", "yfinance", "hmmlearn", "scipy"]
+# dependencies = ["numpy", "pandas", "yfinance"]
 # ///
 """Markov regime detection — a composable library + CLI.
 
-This is the proven Markov framework from Roan (@RohOnChain), refactored from
+This is the educational Markov framework from Roan (@RohOnChain), refactored from
 the on-camera onboarding prompt into one clean, importable module.
 
 It does five things, all asset-agnostic:
@@ -48,6 +48,70 @@ DEFAULT_WINDOW = 20
 DEFAULT_THRESHOLD = 0.05  # ±5% rolling return cutoff
 DEFAULT_YEARS = 10
 DEFAULT_MIN_TRAIN = 252
+MATRIX_TOLERANCE = 1e-10
+BOUNDARY_TOLERANCE = 1e-12
+
+
+class UnavailableEstimate(ValueError):
+    """Valid inputs do not identify the requested statistical estimate."""
+
+
+def _integer(value, name: str, minimum: int) -> int:
+    if isinstance(value, (bool, np.bool_)) or not isinstance(value, (int, np.integer)) or value < minimum:
+        raise ValueError(f"{name} must be an integer >= {minimum}.")
+    return int(value)
+
+
+def _number(value, name: str, minimum: float = 0, *, positive=False) -> float:
+    try:
+        result = float(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be finite and numeric.") from exc
+    if isinstance(value, (bool, np.bool_)) or not np.isfinite(result) or result < minimum or (positive and result == minimum):
+        raise ValueError(f"{name} must be finite and {'>' if positive else '>='} {minimum}.")
+    return result
+
+
+def _prices(close: pd.Series, *, dates=False) -> pd.Series:
+    if not isinstance(close, pd.Series) or close.empty:
+        raise ValueError("Prices must be a nonempty pandas Series.")
+    if dates and not isinstance(close.index, pd.DatetimeIndex):
+        raise ValueError("Prices require a DatetimeIndex.")
+    if close.index.hasnans or not close.index.is_unique or not close.index.is_monotonic_increasing:
+        raise ValueError("Price dates must be present, unique, and sorted in increasing order.")
+    try:
+        values = pd.to_numeric(close, errors="raise").astype(float)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("Prices must be numeric.") from exc
+    if not np.isfinite(values.to_numpy()).all() or (values <= 0).any():
+        raise ValueError("Prices must be finite, positive, and have no missing values.")
+    return values
+
+
+def _labels(labels) -> np.ndarray:
+    try:
+        values = np.asarray(labels, dtype=float)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("Labels must be integer states 0, 1, or 2.") from exc
+    if values.ndim != 1 or not np.isfinite(values).all() or not np.isin(values, [0, 1, 2]).all():
+        raise ValueError("Labels must be integer states 0, 1, or 2.")
+    return values.astype(int)
+
+
+def _matrix(matrix) -> np.ndarray:
+    p = np.asarray(matrix, dtype=float)
+    if p.shape != (3, 3):
+        raise ValueError("Transition matrix must have shape (3, 3).")
+    missing = np.isnan(p).all(axis=1)
+    observed = p[~missing]
+    if not np.isfinite(observed).all() or (observed < 0).any() or not np.allclose(observed.sum(axis=1), 1, rtol=0, atol=MATRIX_TOLERANCE):
+        raise ValueError("Transition rows must be normalized probabilities or entirely missing.")
+    return p
+
+
+def _normalize_counts(counts: np.ndarray) -> np.ndarray:
+    totals = counts.sum(axis=1, keepdims=True)
+    return np.divide(counts, totals, out=np.full((3, 3), np.nan), where=totals != 0)
 
 
 # --------------------------------------------------------------------------- #
@@ -55,6 +119,9 @@ DEFAULT_MIN_TRAIN = 252
 # --------------------------------------------------------------------------- #
 def fetch_ticker(ticker: str, years: int = DEFAULT_YEARS) -> pd.Series:
     """Fetch a daily close series via yfinance, with one retry on empty data."""
+    years = _integer(years, "years", 1)
+    if not isinstance(ticker, str) or not ticker.strip() or any(c.isspace() or c == "," for c in ticker):
+        raise ValueError("Provide exactly one nonempty ticker symbol.")
     import yfinance as yf
 
     end = pd.Timestamp.now("UTC").tz_localize(None).normalize()
@@ -91,9 +158,11 @@ def fetch_ticker(ticker: str, years: int = DEFAULT_YEARS) -> pd.Series:
     # Some yfinance versions return a MultiIndex column frame.
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = df.columns.get_level_values(0)
-    close = df["Close"].dropna()
+    close = df["Close"]
+    if isinstance(close, pd.DataFrame):
+        raise ValueError("Ticker returned multiple close series; provide one symbol.")
     close.name = ticker
-    return close
+    return _prices(close, dates=True)
 
 
 def load_csv(path: str) -> pd.Series:
@@ -137,16 +206,20 @@ def load_csv(path: str) -> pd.Series:
             )
 
     out = df[[date_col, close_col]].copy()
-    out[date_col] = pd.to_datetime(out[date_col], utc=False, errors="coerce")
-    out = out.dropna(subset=[date_col]).sort_values(date_col)
+    if pd.api.types.is_numeric_dtype(out[date_col]):
+        raise ValueError("Numeric dates are ambiguous; supply ISO date or datetime strings.")
+    try:
+        out[date_col] = pd.to_datetime(out[date_col], utc=True, errors="raise")
+        out[close_col] = pd.to_numeric(out[close_col], errors="raise")
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"Invalid date or price in {path}: {exc}") from exc
+    out = out.sort_values(date_col)
     close = pd.Series(
-        pd.to_numeric(out[close_col], errors="coerce").to_numpy(),
+        out[close_col].to_numpy(),
         index=pd.DatetimeIndex(out[date_col]),
         name=Path(path).stem,
-    ).dropna()
-    if close.empty:
-        raise RuntimeError(f"No usable rows after parsing {path}.")
-    return close
+    )
+    return _prices(close, dates=True)
 
 
 # --------------------------------------------------------------------------- #
@@ -163,111 +236,240 @@ def label_regimes(
     Bear (0)     : rolling return <  -threshold
     Sideways (1) : otherwise
     """
-    rolling_return = close.pct_change(window)
+    close = _prices(close)
+    window = _integer(window, "window", 1)
+    threshold = _number(threshold, "threshold")
+    rolling_return = close.pct_change(window, fill_method=None)
+    if not np.isfinite(rolling_return.iloc[window:].to_numpy()).all():
+        raise ValueError("Rolling returns must be finite; price ratios overflowed.")
     labels = pd.Series(1, index=close.index, dtype=int)  # default Sideways
-    labels[rolling_return > threshold] = 2  # Bull
-    labels[rolling_return < -threshold] = 0  # Bear
+    labels[(rolling_return - threshold) > BOUNDARY_TOLERANCE] = 2  # Bull
+    labels[(rolling_return + threshold) < -BOUNDARY_TOLERANCE] = 0  # Bear
     return labels.loc[rolling_return.notna()]
 
 
-def build_transition_matrix(labels: pd.Series) -> np.ndarray:
-    """MLE estimate of the 3x3 transition matrix by counting transitions."""
-    counts = np.zeros((3, 3), dtype=float)
-    arr = np.asarray(labels, dtype=int)
+def _transition_counts(labels) -> np.ndarray:
+    counts = np.zeros((3, 3), dtype=int)
+    arr = _labels(labels)
     for i in range(len(arr) - 1):
-        counts[arr[i], arr[i + 1]] += 1.0
-    row_sums = counts.sum(axis=1, keepdims=True)
-    row_sums[row_sums == 0] = 1.0  # empty row -> stay put / no info
-    return counts / row_sums
+        counts[arr[i], arr[i + 1]] += 1
+    return counts
+
+
+def build_transition_matrix(labels: pd.Series) -> np.ndarray:
+    """MLE 3x3 transition matrix; unobserved outgoing rows are entirely NaN."""
+    return _normalize_counts(_transition_counts(labels))
 
 
 def nstep_forecast(matrix: np.ndarray, n: int) -> np.ndarray:
-    """Chapman-Kolmogorov: the n-step transition matrix is P raised to n."""
-    return np.linalg.matrix_power(matrix, n)
+    """P^n, with unavailable rows tracked by positive-probability reachability."""
+    p = _matrix(matrix)
+    n = _integer(n, "horizon", 0)
+    supported = ~np.isnan(p).all(axis=1)
+    numeric = np.nan_to_num(p, nan=0.)
+    edges = numeric > 0
+    available = np.ones(3, dtype=bool)
+    for _ in range(n):
+        available = supported & ~np.any(edges & ~available[None, :], axis=1)
+    forecast = np.linalg.matrix_power(numeric, n)
+    forecast[~available] = np.nan
+    return forecast
 
 
 def stationary_distribution(matrix: np.ndarray) -> np.ndarray:
-    """Left eigenvector of P for eigenvalue 1, normalised to sum to 1.
+    """Unique stationary vector, without promising convergence for every chain.
 
-    This is the long-run regime mix the chain converges to regardless of
-    where it starts.
+    Missing transition evidence or nonuniqueness raises UnavailableEstimate.
     """
-    eigvals, eigvecs = np.linalg.eig(matrix.T)
-    idx = np.argmin(np.abs(eigvals - 1.0))
-    vec = np.abs(np.real(eigvecs[:, idx]))
-    return vec / vec.sum()
+    p = _matrix(matrix)
+    if np.isnan(p).any():
+        raise UnavailableEstimate("Insufficient transition evidence for a stationary distribution.")
+    # Uniqueness is structural: exactly one closed communicating class.
+    # Numerical rank tolerances would misclassify slowly mixing chains.
+    reachable = (p > 0) | np.eye(3, dtype=bool)
+    for k in range(3):
+        reachable |= reachable[:, k, None] & reachable[None, k, :]
+    remaining = set(range(3))
+    closed_classes = 0
+    while remaining:
+        origin = min(remaining)
+        component = np.flatnonzero(reachable[origin] & reachable[:, origin])
+        remaining.difference_update(component)
+        outside = np.setdiff1d(np.arange(3), component)
+        if not np.any(p[np.ix_(component, outside)] > 0):
+            closed_classes += 1
+    if closed_classes != 1:
+        raise UnavailableEstimate("Stationary distribution is not unique.")
+    # Construct P-I's diagonal from outgoing mass to avoid cancellation when
+    # persistence is near one, then scale the balance equations before solving.
+    off_diagonal = p.copy()
+    np.fill_diagonal(off_diagonal, 0.)
+    balance = off_diagonal.T.copy()
+    np.fill_diagonal(balance, -off_diagonal.sum(axis=1))
+    scale = np.max(np.abs(balance))
+    system = np.vstack([balance / scale, np.ones(3)])
+    vec, *_ = np.linalg.lstsq(system, [0., 0., 0., 1.], rcond=None)
+    if (vec < -MATRIX_TOLERANCE).any():
+        raise ValueError("Stationary solution contains negative probabilities.")
+    vec = np.maximum(vec, 0)
+    vec /= vec.sum()
+    if not np.allclose(vec @ p, vec, rtol=0, atol=MATRIX_TOLERANCE):
+        raise ValueError("Stationary solution failed its residual check.")
+    return vec
 
 
 def signal_from_matrix(matrix: np.ndarray, current_state: int) -> float:
     """The signal: P(next=Bull | current) - P(next=Bear | current).
 
-    Positive -> long bias, negative -> short bias, magnitude -> conviction.
+    Positive -> long bias, negative -> short bias. This is not calibrated confidence.
     """
-    return float(matrix[current_state, 2] - matrix[current_state, 0])
+    p = _matrix(matrix)
+    state = _integer(current_state, "current_state", 0)
+    if state > 2:
+        raise ValueError("current_state must be 0, 1, or 2.")
+    return float(p[state, 2] - p[state, 0])
 
 
-def walk_forward_backtest(
-    close: pd.Series,
-    labels: pd.Series,
-    min_train: int = DEFAULT_MIN_TRAIN,
-) -> dict:
-    """No-lookahead walk-forward backtest.
+def walk_forward_signals(close: pd.Series, labels: pd.Series,
+                         min_train: int = DEFAULT_MIN_TRAIN) -> pd.DataFrame:
+    """Forecast at t from labels strictly before t; NaN represents no evidence.
 
-    At each day t: fit the transition matrix on labels[:t] only, read the
-    signal from the current state, take a +1/0/-1 position, score it against
-    the next day's return.
-
-    Incremental O(n): instead of rebuilding the full count matrix every step
-    (the original O(n^2)), we maintain a running 3x3 count matrix and add one
-    transition per step. MLE counting is a pure sum, so the per-step matrix is
-    bit-for-bit identical to the from-scratch rebuild — same numbers, fast.
+    The result includes warmup dates, with eligible=False until min_train.
+    Labels must be a contiguous suffix of the price index.
     """
-    daily_returns = close.pct_change().dropna()
-    common_index = labels.index.intersection(daily_returns.index)
-    labels = labels.loc[common_index]
-    daily_returns = daily_returns.loc[common_index]
-
-    if len(labels) < min_train + 30:
-        return {"sharpe": float("nan"), "max_drawdown": float("nan"), "n_trades": 0}
-
-    lab = np.asarray(labels, dtype=int)
-    rets = daily_returns.to_numpy(dtype=float)
-
-    # Seed running counts with all transitions strictly inside [0, min_train).
+    close = _prices(close, dates=True)
+    min_train = _integer(min_train, "min_train", 2)
+    lab = _labels(labels)
+    if not isinstance(labels, pd.Series) or not labels.index.equals(close.index[len(close) - len(labels):]):
+        raise ValueError("Labels must align with a contiguous suffix of the price dates.")
+    values = np.full((len(lab), 4), np.nan)
     counts = np.zeros((3, 3), dtype=float)
-    for i in range(min_train - 1):
-        counts[lab[i], lab[i + 1]] += 1.0
+    for t in range(len(lab)):
+        # Before scoring t, only transitions ending at t-1 have been added.
+        if t >= min_train:
+            row = _normalize_counts(counts)[lab[t]]
+            values[t, :3] = row
+            values[t, 3] = row[2] - row[0]
+        if t > 0:
+            counts[lab[t - 1], lab[t]] += 1
+    result = pd.DataFrame(values, index=labels.index, columns=["bear", "sideways", "bull", "signal"])
+    result["eligible"] = np.arange(len(lab)) >= min_train
+    return result
 
-    strategy_returns = np.empty(len(lab) - 1 - min_train, dtype=float)
-    for k, t in enumerate(range(min_train, len(lab) - 1)):
-        # counts now holds exactly the transitions among labels[:t]
-        # (indices 0..t-1), which is what the from-scratch build used.
-        row_sums = counts.sum(axis=1, keepdims=True)
-        safe = np.where(row_sums == 0, 1.0, row_sums)
-        P_t = counts / safe
 
-        current_state = lab[t]
-        signal = float(P_t[current_state, 2] - P_t[current_state, 0])
-        position = float(np.sign(signal))
-        strategy_returns[k] = position * rets[t + 1]
+def execution_ledger(close: pd.Series, targets: pd.Series, *, cost_bps: float = 0,
+                     start=None, end=None) -> pd.DataFrame:
+    """Decision at t, fill at close t+1, earn the return ending at t+2.
 
-        # Slide the window forward by one: add the transition t-1 -> t so that
-        # next iteration's `counts` covers labels[:t+1].
-        counts[lab[t - 1], lab[t]] += 1.0
+    Evaluation begins flat immediately before its first close and ends flat.
+    A prior-date decision may fill at the first evaluation close. Missing
+    targets mean flat, not carry-forward. Costs apply to absolute turnover;
+    a reversal is two units and final liquidation is charged.
+    """
+    close = _prices(close, dates=True)
+    cost_bps = _number(cost_bps, "cost_bps")
+    if not isinstance(targets, pd.Series) or not targets.index.is_unique or not targets.index.is_monotonic_increasing:
+        raise ValueError("Targets must be a Series with unique sorted dates.")
+    if not targets.index.isin(close.index).all():
+        raise ValueError("Target dates must be present in prices.")
+    try:
+        targets = pd.to_numeric(targets, errors="raise").astype(float)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("Targets must be numeric or missing.") from exc
+    known = targets.dropna().to_numpy()
+    if not np.isfinite(known).all() or (np.abs(known) > 1).any():
+        raise ValueError("Targets must be finite and between -1 and 1, or missing.")
+    decisions = targets.reindex(close.index).fillna(0.)
+    index = close.loc[start:end].index
+    ledger = pd.DataFrame(index=index)
+    ledger["target"] = decisions.loc[index]
+    position = decisions.shift(1, fill_value=0.).loc[index].copy()
+    if len(position):
+        position.iloc[-1] = 0.  # Liquidate instead of opening a terminal position.
+    ledger["position"] = position
+    previous = position.shift(1, fill_value=0.)
+    ledger["gross_return"] = previous * close.pct_change(fill_method=None).fillna(0.).loc[index]
+    ledger["turnover"] = (position - previous).abs()
+    ledger["cost"] = ledger["turnover"] * cost_bps / 10_000
+    ledger["net_return"] = ledger["gross_return"] - ledger["cost"]
+    if (ledger["net_return"] <= -1).any():
+        raise ValueError("Strategy equity is exhausted; this unlevered return ledger cannot continue.")
+    ledger["equity"] = (1 + ledger["net_return"]).cumprod()
+    if not np.isfinite(ledger.to_numpy()).all():
+        raise ValueError("Execution produced nonfinite values.")
+    return ledger
 
-    sr = strategy_returns
-    std = sr.std(ddof=1) if len(sr) > 1 else 0.0
-    if std == 0 or not np.isfinite(std):
-        sharpe = float("nan")
+
+def summarize_ledger(ledger: pd.DataFrame, periods_per_year: float = 252) -> dict:
+    """Net metrics including cash periods, entry/reversal count, and initial capital.
+
+    n_periods includes the initial close (gross return zero). CAGR uses the
+    elapsed calendar time (365.2425 days/year). Sharpe uses a
+    zero risk-free rate. Statistical metrics require at least two periods;
+    zero variance makes Sharpe unavailable. Drawdown is defined from one row.
+    """
+    periods_per_year = _number(periods_per_year, "periods_per_year", positive=True)
+    keys = ["total_return", "cagr", "volatility", "sharpe", "max_drawdown", "exposure", "turnover"]
+    result = {key: None for key in keys}
+    result.update(n_trades=0, n_periods=len(ledger), unavailable={})
+    if ledger.empty:
+        result["unavailable"] = {key: "no_evaluation_periods" for key in keys}
+        return result
+    required = ["position", "net_return", "equity", "turnover"]
+    if not np.isfinite(ledger[required].to_numpy()).all() or (ledger.equity <= 0).any():
+        raise ValueError("Ledger must contain finite values and positive equity.")
+    returns = ledger.net_return.to_numpy(float)
+    equity = np.r_[1., ledger.equity.to_numpy(float)]
+    previous = ledger.position.shift(1, fill_value=0.)
+    entries = (ledger.position != 0) & ((previous == 0) | (np.sign(previous) != np.sign(ledger.position)))
+    result.update(total_return=float(equity[-1] - 1),
+                  max_drawdown=float((equity / np.maximum.accumulate(equity) - 1).min()),
+                  exposure=float(ledger.position.abs().mean()),
+                  turnover=float(ledger.turnover.sum()), n_trades=int(entries.sum()))
+    if not isinstance(ledger.index, pd.DatetimeIndex) or not ledger.index.is_monotonic_increasing or not ledger.index.is_unique:
+        raise ValueError("Ledger requires unique sorted datetime observations.")
+    elapsed_days = (ledger.index[-1] - ledger.index[0]).total_seconds() / 86_400
+    if elapsed_days <= 0:
+        result["unavailable"]["cagr"] = "zero_elapsed_time"
     else:
-        sharpe = float(sr.mean() / std * np.sqrt(252))
+        with np.errstate(over="ignore", invalid="ignore"):
+            cagr = np.expm1(np.log(equity[-1]) * 365.2425 / elapsed_days)
+        if np.isfinite(cagr):
+            result["cagr"] = float(cagr)
+        else:
+            result["unavailable"]["cagr"] = "annualization_overflow"
+    if len(returns) < 2:
+        result["unavailable"].update(volatility="fewer_than_two_periods", sharpe="fewer_than_two_periods")
+    else:
+        std = float(returns.std(ddof=1))
+        result["volatility"] = float(std * np.sqrt(periods_per_year))
+        if std == 0:
+            result["unavailable"]["sharpe"] = "zero_return_variance"
+        else:
+            result["sharpe"] = float(returns.mean() / std * np.sqrt(periods_per_year))
+    return result
 
-    equity = (1.0 + sr).cumprod()
-    running_max = np.maximum.accumulate(equity)
-    drawdown = (equity - running_max) / running_max
-    max_dd = float(drawdown.min()) if len(drawdown) else float("nan")
 
-    return {"sharpe": sharpe, "max_drawdown": max_dd, "n_trades": int(len(sr))}
+def walk_forward_backtest(close: pd.Series, labels: pd.Series,
+                          min_train: int = DEFAULT_MIN_TRAIN, *,
+                          periods_per_year: float = 252, cost_bps: float = 0) -> dict:
+    """Sign-based strategy using causal next-close execution and explicit costs."""
+    signals = walk_forward_signals(close, labels, min_train)
+    eligible = signals.loc[signals.eligible]
+    targets = np.sign(signals.signal)
+    # Begin at the close after the first eligible decision.
+    if len(eligible) > 1:
+        ledger = execution_ledger(close, targets, cost_bps=cost_bps, start=eligible.index[1])
+    else:
+        _number(cost_bps, "cost_bps")
+        ledger = pd.DataFrame()
+    result = summarize_ledger(ledger, periods_per_year)
+    result["unavailable_forecast_bars"] = int(eligible.signal.isna().sum())
+    result["position_rule"] = "sign_signal"
+    result["execution"] = "decision_t_fill_t_plus_1_return_t_plus_2"
+    result["cost_bps"] = float(cost_bps)
+    result["periods_per_year"] = float(periods_per_year)
+    return result
 
 
 def fit_hmm(returns: pd.Series, n_components: int = 3, random_state: int = 42):
@@ -312,6 +514,8 @@ def _hmm_summary(close: pd.Series, enabled: bool) -> dict:
         }
 
     means = np.array([model.means_[k][0] for k in range(model.n_components)])
+    if not np.isfinite(means).all():
+        return {"available": False, "reason": "HMM produced nonfinite estimated means"}
     order = np.argsort(means)  # ascending mean return
     rank_names = ["Bear", "Sideways", "Bull"]
     regimes = []
@@ -346,31 +550,51 @@ def analyze(
     threshold: float = DEFAULT_THRESHOLD,
     min_train: int = DEFAULT_MIN_TRAIN,
     hmm: bool = True,
+    horizon: int = 1,
+    periods_per_year: float = 252,
+    cost_bps: float = 0,
 ) -> dict:
     """Run the whole framework and return one structured dict.
 
     See SKILL.md for the full field-by-field JSON contract.
     """
-    close = close.dropna()
+    close = _prices(close, dates=True)
+    min_train = _integer(min_train, "min_train", 2)
+    horizon = _integer(horizon, "horizon", 0)
+    periods_per_year = _number(periods_per_year, "periods_per_year", positive=True)
+    cost_bps = _number(cost_bps, "cost_bps")
     labels = label_regimes(close, window=window, threshold=threshold)
-    if len(labels) < 2:
+    if len(labels) < 1:
         raise RuntimeError(
             "Not enough data to label regimes — need more rows than the "
             f"rolling window ({window}). Got {len(close)} price rows."
         )
 
     P = build_transition_matrix(labels)
-    pi = stationary_distribution(P)
+    unavailable = {}
+    try:
+        pi = stationary_distribution(P)
+    except UnavailableEstimate as exc:
+        pi = np.full(3, np.nan)
+        unavailable["stationary_distribution"] = str(exc)
 
     current_state = int(labels.iloc[-1])
     next_probs = P[current_state]  # P(next | current) over [Bear, Side, Bull]
     bull_p = float(next_probs[2])
     bear_p = float(next_probs[0])
     side_p = float(next_probs[1])
+    forecast = nstep_forecast(P, horizon)[current_state]
+    if np.isnan(next_probs).all():
+        unavailable["next_state_probabilities"] = "unobserved_current_state_transitions"
+        unavailable["signal"] = "unobserved_current_state_transitions"
+    if np.isnan(forecast).all():
+        unavailable["forecast"] = "forecast_reaches_unobserved_transition_rows"
 
-    bt = walk_forward_backtest(close, labels, min_train=min_train)
+    bt = walk_forward_backtest(close, labels, min_train=min_train,
+                               periods_per_year=periods_per_year, cost_bps=cost_bps)
 
-    return {
+    return _json_safe({
+        "schema_version": 2,
         "source": source,
         "rows": int(len(close)),
         "date_start": str(close.index.min().date()),
@@ -379,6 +603,9 @@ def analyze(
             "window": window,
             "threshold": threshold,
             "min_train": min_train,
+            "horizon": horizon,
+            "periods_per_year": periods_per_year,
+            "cost_bps": cost_bps,
         },
         "states": STATES,
         "current_regime": STATES[current_state],
@@ -388,7 +615,9 @@ def analyze(
             "bull": bull_p,
         },
         "signal": bull_p - bear_p,
+        "forecast": {"horizon": horizon, "probabilities": dict(zip(["bear", "sideways", "bull"], forecast))},
         "transition_matrix": [[float(x) for x in row] for row in P],
+        "transition_counts": _transition_counts(labels).tolist(),
         "persistence_diagonal": {
             "bear": float(P[0, 0]),
             "sideways": float(P[1, 1]),
@@ -399,21 +628,36 @@ def analyze(
             "sideways": float(pi[1]),
             "bull": float(pi[2]),
         },
-        "walk_forward": {
-            "sharpe": bt["sharpe"],
-            "max_drawdown": bt["max_drawdown"],
-            "n_trades": bt["n_trades"],
-        },
+        "walk_forward": bt,
+        "unavailable": unavailable,
         "hmm": _hmm_summary(close, hmm),
         "framework": "Roan (@RohOnChain)",
         "disclaimer": "Backtests are historical, not forward-looking.",
-    }
+    })
+
+
+def _json_safe(value):
+    """Convert numerical missing estimates to strict JSON null values."""
+    if isinstance(value, dict):
+        return {key: _json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple, np.ndarray)):
+        return [_json_safe(item) for item in value]
+    if isinstance(value, (float, np.floating)):
+        return float(value) if np.isfinite(value) else None
+    if isinstance(value, np.integer):
+        return int(value)
+    return value
 
 
 # --------------------------------------------------------------------------- #
 # Pretty terminal output — the on-camera demo. Keep it.
 # --------------------------------------------------------------------------- #
 def _print_pretty(a: dict) -> None:
+    def fmt(value, *, percent=False):
+        if value is None:
+            return "unavailable"
+        return f"{value * 100:.2f}%" if percent else f"{value:.4f}"
+
     P = np.array(a["transition_matrix"])
     print(
         f"\nmarkov-regime — source={a['source']} "
@@ -424,42 +668,37 @@ def _print_pretty(a: dict) -> None:
     print("\nTransition matrix (rows = from, cols = to):")
     print(f"            {'Bear':>9s} {'Sideways':>9s} {'Bull':>9s}")
     for i, from_state in enumerate(STATES):
-        row = "  ".join(f"{P[i, j] * 100:7.2f}%" for j in range(3))
+        row = "  ".join(fmt(P[i, j], percent=True) for j in range(3))
         print(f"  {from_state:>9s}  {row}")
 
     pd_diag = a["persistence_diagonal"]
     print("\nPersistence diagonal (how sticky each regime is):")
-    print(f"  Bear -> Bear:         {pd_diag['bear'] * 100:.2f}%")
-    print(f"  Sideways -> Sideways: {pd_diag['sideways'] * 100:.2f}%")
-    print(f"  Bull -> Bull:         {pd_diag['bull'] * 100:.2f}%")
+    for state in STATES:
+        print(f"  {state} -> {state}: {fmt(pd_diag[state.lower()], percent=True)}")
 
     sd = a["stationary_distribution"]
     print("\nStationary distribution (long-run regime mix):")
-    print(f"       Bear: {sd['bear'] * 100:.2f}%")
-    print(f"   Sideways: {sd['sideways'] * 100:.2f}%")
-    print(f"       Bull: {sd['bull'] * 100:.2f}%")
+    for state in STATES:
+        print(f"  {state}: {fmt(sd[state.lower()], percent=True)}")
 
     np_ = a["next_state_probabilities"]
     print(f"\nCurrent regime: {a['current_regime']}")
-    print("Next-day probabilities from here:")
-    print(
-        f"   Bull: {np_['bull'] * 100:.2f}%   "
-        f"Bear: {np_['bear'] * 100:.2f}%   "
-        f"Sideways: {np_['sideways'] * 100:.2f}%"
-    )
-    print(f"Signal (bull_prob - bear_prob): {a['signal']:+.4f}")
+    print("Next-bar probabilities from here:")
+    for state in STATES:
+        print(f"  {state}: {fmt(np_[state.lower()], percent=True)}")
+    print(f"Signal (bull_prob - bear_prob): {fmt(a['signal'])}")
+    print(f"{a['forecast']['horizon']}-bar forecast: " + ", ".join(
+        f"{key}={fmt(value, percent=True)}" for key, value in a["forecast"]["probabilities"].items()))
 
     wf = a["walk_forward"]
     print("\nWalk-forward backtest (matrix re-estimated every step, no lookahead):")
-    if np.isfinite(wf["sharpe"]):
-        print(f"  Sharpe (annualised): {wf['sharpe']:.3f}")
-    else:
-        print("  Sharpe: NaN (insufficient data — try a longer history)")
-    if np.isfinite(wf["max_drawdown"]):
-        print(f"  Max drawdown:        {wf['max_drawdown'] * 100:.2f}%")
-    else:
-        print("  Max drawdown: NaN")
-    print(f"  Trades evaluated:    {wf['n_trades']}")
+    print(f"  Sharpe (annualised): {fmt(wf['sharpe'])}")
+    print(f"  Max drawdown: {fmt(wf['max_drawdown'], percent=True)}")
+    print(f"  Entries including reversals: {wf['n_trades']}; evaluation periods: {wf['n_periods']}")
+    print(f"  Unavailable forecast bars: {wf['unavailable_forecast_bars']}")
+    print(f"  Costs: {wf['cost_bps']:g} bps per unit turnover; decision t -> fill t+1 -> return t+2")
+    for key, reason in a["unavailable"].items():
+        print(f"  {key} unavailable: {reason}")
 
     hmm = a["hmm"]
     if hmm.get("available"):
@@ -486,8 +725,15 @@ def _print_pretty(a: dict) -> None:
 # --------------------------------------------------------------------------- #
 # CLI
 # --------------------------------------------------------------------------- #
+class _ArgumentParser(argparse.ArgumentParser):
+    def error(self, message):
+        raise ValueError(message)
+
+
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
+    argv = list(sys.argv[1:] if argv is None else argv)
+    json_mode = "--json" in argv
+    parser = _ArgumentParser(
         prog="markov_regime",
         description="Markov regime detection for any asset (Roan / @RohOnChain).",
     )
@@ -504,7 +750,7 @@ def main(argv: list[str] | None = None) -> int:
         "--window",
         type=int,
         default=DEFAULT_WINDOW,
-        help=f"Rolling-return window in days (default {DEFAULT_WINDOW})",
+        help=f"Rolling-return window in bars (default {DEFAULT_WINDOW})",
     )
     parser.add_argument(
         "--threshold",
@@ -528,9 +774,21 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Emit the analyze() dict as JSON to stdout and nothing else",
     )
-    args = parser.parse_args(argv)
+    parser.add_argument("--horizon", type=int, default=1, help="Forecast horizon in bars (default 1)")
+    parser.add_argument("--periods-per-year", type=float, default=252,
+                        help="Annualization assumption; use 365 for daily crypto (default 252)")
+    parser.add_argument("--cost-bps", type=float, default=0,
+                        help="One-way cost per unit turnover in basis points (default 0)")
 
     try:
+        args = parser.parse_args(argv)
+        _integer(args.years, "years", 1)
+        _integer(args.window, "window", 1)
+        _integer(args.min_train, "min_train", 2)
+        _integer(args.horizon, "horizon", 0)
+        _number(args.threshold, "threshold")
+        _number(args.periods_per_year, "periods_per_year", positive=True)
+        _number(args.cost_bps, "cost_bps")
         if args.ticker:
             if not args.json:
                 print(
@@ -549,16 +807,19 @@ def main(argv: list[str] | None = None) -> int:
             threshold=args.threshold,
             min_train=args.min_train,
             hmm=not args.no_hmm,
+            horizon=args.horizon,
+            periods_per_year=args.periods_per_year,
+            cost_bps=args.cost_bps,
         )
     except Exception as exc:  # noqa: BLE001
-        if args.json:
-            print(json.dumps({"error": str(exc)}))
+        if json_mode:
+            print(json.dumps({"error": str(exc)}, allow_nan=False))
         else:
             print(f"\nERROR: {exc}\n", file=sys.stderr)
         return 1
 
     if args.json:
-        print(json.dumps(result))
+        print(json.dumps(result, allow_nan=False))
     else:
         _print_pretty(result)
     return 0

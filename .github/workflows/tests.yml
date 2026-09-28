@@ -1,0 +1,36 @@
+name: Validated research checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ['3.10', '3.13']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.11.31'
+          python-version: ${{ matrix.python }}
+          enable-cache: true
+      - name: Install locked core and test dependencies
+        run: uv sync --locked
+      - name: Verify optional HMM is absent
+        run: uv run --locked python -c "import importlib.util; assert importlib.util.find_spec('hmmlearn') is None"
+      - name: Run offline tests
+        run: uv run --locked python -m pytest -q
+      - name: Exercise locked standalone core script
+        run: uv run --locked --script scripts/markov_regime.py --csv tests/fixtures/cli_prices.csv --json --no-hmm
+      - name: Verify strict standalone JSON contract
+        run: uv run --locked python -c "import json,subprocess; p=subprocess.run(['uv','run','--locked','--script','scripts/markov_regime.py','--csv','tests/fixtures/cli_prices.csv','--json','--no-hmm'],capture_output=True,text=True,check=True); r=json.loads(p.stdout,parse_constant=lambda x: (_ for _ in ()).throw(ValueError(x))); assert r['schema_version']==2; assert r['signal'] is None"

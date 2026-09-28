@@ -1,0 +1,31 @@
+{
+  "contract_version": 2,
+  "state_order": ["Bear", "Sideways", "Bull"],
+  "display_order": ["Bull", "Bear", "Sideways"],
+  "defaults": {"window": 20, "threshold": 0.05, "boundary_tolerance": 1e-12, "stationary_tolerance": 1e-10},
+  "threshold_cases": [
+    {"id": "positive_boundary", "return": 0.05, "expected": 1},
+    {"id": "negative_boundary", "return": -0.05, "expected": 1},
+    {"id": "positive_within_tolerance", "return": 0.0500000000005, "expected": 1},
+    {"id": "negative_within_tolerance", "return": -0.0500000000005, "expected": 1},
+    {"id": "positive_outside_tolerance", "return": 0.050000000002, "expected": 2},
+    {"id": "negative_outside_tolerance", "return": -0.050000000002, "expected": 0},
+    {"id": "simple_bull", "return": 0.051, "expected": 2},
+    {"id": "simple_sideways", "return": -0.049, "expected": 1},
+    {"id": "warmup", "return": null, "expected": null}
+  ],
+  "transition_cases": [
+    {"id": "all_states", "labels": [0, 0, 1, 2, 2, 1, 0], "expected_counts": [[1, 1, 0], [1, 0, 1], [0, 1, 1]], "expected_matrix": [[0.5, 0.5, 0.0], [0.5, 0.0, 0.5], [0.0, 0.5, 0.5]]},
+    {"id": "sparse", "labels": [2, 2, 1], "expected_counts": [[0, 0, 0], [0, 0, 0], [0, 1, 1]], "expected_matrix": [[null, null, null], [null, null, null], [0.0, 0.5, 0.5]]}
+  ],
+  "stationary_cases": [
+    {"id": "asymmetric", "matrix": [[0.2, 0.3, 0.5], [0.2, 0.3, 0.5], [0.2, 0.3, 0.5]], "expected_status": "available", "expected_distribution": [0.2, 0.3, 0.5]},
+    {"id": "slow_mixing", "matrix": [[0.998, 0.001, 0.001], [0.001, 0.998, 0.001], [0.001, 0.001, 0.998]], "expected_status": "available", "expected_distribution": [0.3333333333333333, 0.3333333333333333, 0.3333333333333333]},
+    {"id": "periodic", "matrix": [[0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0]], "expected_status": "available", "expected_distribution": [0.3333333333333333, 0.3333333333333333, 0.3333333333333333]},
+    {"id": "absorbing", "matrix": [[1.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 0.0, 0.0]], "expected_status": "available", "expected_distribution": [1.0, 0.0, 0.0]},
+    {"id": "nonunique", "matrix": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]], "expected_status": "nonunique", "expected_distribution": null},
+    {"id": "incomplete", "matrix": [[null, null, null], [null, null, null], [0.0, 0.5, 0.5]], "expected_status": "insufficient_evidence", "expected_distribution": null}
+  ],
+  "stable_label_case": {"hold": 4, "labels": [null, 2, 2, 2, 2, 1, 1, 1, 0, 0, 0, 0, 0], "expected_events": [{"confirmation_index": 11, "origin_index": 8, "from": 2, "to": 0}]},
+  "table_case": {"distribution": [0.2, 0.3, 0.5], "expected_display": [0.5, 0.2, 0.3], "matrix": [[0.5, 0.5, 0.0], [0.5, 0.0, 0.5], [0.0, 0.5, 0.5]], "expected_display_matrix": [[0.5, 0.0, 0.5], [0.0, 0.5, 0.5], [0.5, 0.5, 0.0]]}
+}

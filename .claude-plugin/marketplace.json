@@ -3,13 +3,13 @@
   "owner": { "name": "Lewis Jackson" },
   "metadata": {
     "description": "Markov Hedge Fund Method — companion Claude Code skill for video 1 of the Quant Series. Framework by Roan (@RohOnChain).",
-    "version": "1.0.0"
+    "version": "2.0.0"
   },
   "plugins": [
     {
       "name": "markov-hedge-fund-method",
       "source": ".",
-      "description": "Markov regime detection for any asset. Labels Bull/Bear/Sideways, builds the MLE transition matrix, forecasts n-step ahead, solves the stationary distribution, and runs a no-lookahead walk-forward backtest. Optional Hidden Markov Model upgrade."
+      "description": "Markov regime research with strict JSON v2, explicit missing evidence, validated probabilities, and reproducible walk-forward evaluation. Optional HMM summary."
     }
   ]
 }

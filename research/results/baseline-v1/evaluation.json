@@ -1,0 +1,514 @@
+{
+  "assets": {
+    "BTC-USD": {
+      "date_end": "2025-12-31",
+      "date_start": "2020-01-01",
+      "filtered_minus_momentum": {
+        "0": {
+          "cagr": 0.0,
+          "max_drawdown": 0.0,
+          "sharpe": 0.0,
+          "total_return": 0.0
+        },
+        "10": {
+          "cagr": 0.0,
+          "max_drawdown": 0.0,
+          "sharpe": 0.0,
+          "total_return": 0.0
+        },
+        "25": {
+          "cagr": 0.0,
+          "max_drawdown": 0.0,
+          "sharpe": 0.0,
+          "total_return": 0.0
+        },
+        "5": {
+          "cagr": 0.0,
+          "max_drawdown": 0.0,
+          "sharpe": 0.0,
+          "total_return": 0.0
+        }
+      },
+      "forecast": {
+        "available": 2191,
+        "brier": {
+          "historical_frequency": 0.6646354540223972,
+          "markov": 0.28725500859846925,
+          "persistence": 0.3377453217708809
+        },
+        "brier_definition": "Mean sum of squared class errors (range 0..2; lower is better)",
+        "by_current_state": {
+          "Bear": {
+            "available": 566,
+            "coverage": 1.0,
+            "opportunities": 566
+          },
+          "Bull": {
+            "available": 836,
+            "coverage": 1.0,
+            "opportunities": 836
+          },
+          "Sideways": {
+            "available": 789,
+            "coverage": 1.0,
+            "opportunities": 789
+          }
+        },
+        "coverage": 1.0,
+        "eligible": 2191,
+        "first_scored_decision": "2020-01-01",
+        "last_scored_decision": "2025-12-30",
+        "opportunities": 2191,
+        "unavailable": 0,
+        "unavailable_reason": null
+      },
+      "observations": 2192,
+      "periods_per_year": 365,
+      "strategies": {
+        "buy_and_hold": {
+          "0": {
+            "cagr": 0.5164299479092558,
+            "exposure": 0.9995437956204379,
+            "max_drawdown": -0.7663456370856907,
+            "n_periods": 2192,
+            "n_trades": 1,
+            "sharpe": 0.992664015414385,
+            "total_return": 11.153709657501407,
+            "turnover": 2.0,
+            "unavailable": {},
+            "volatility": 0.6095151977699218
+          },
+          "10": {
+            "cagr": 0.5159215344825341,
+            "exposure": 0.9995437956204379,
+            "max_drawdown": -0.7663456370856906,
+            "n_periods": 2192,
+            "n_trades": 1,
+            "sharpe": 0.9921110773602071,
+            "total_return": 11.129286563965392,
+            "turnover": 2.0,
+            "unavailable": {},
+            "volatility": 0.6095192244867458
+          },
+          "25": {
+            "cagr": 0.5151582744837613,
+            "exposure": 0.9995437956204379,
+            "max_drawdown": -0.7663456370856908,
+            "n_periods": 2192,
+            "n_trades": 1,
+            "sharpe": 0.991280018737659,
+            "total_return": 11.092697979907289,
+            "turnover": 2.0,
+            "unavailable": {},
+            "volatility": 0.6095262884962745
+          },
+          "5": {
+            "cagr": 0.5161757838054579,
+            "exposure": 0.9995437956204379,
+            "max_drawdown": -0.7663456370856907,
+            "n_periods": 2192,
+            "n_trades": 1,
+            "sharpe": 0.9923876566171197,
+            "total_return": 11.141495040317011,
+            "turnover": 2.0,
+            "unavailable": {},
+            "volatility": 0.6095171428650845
+          }
+        },
+        "filtered_momentum": {
+          "0": {
+            "cagr": 0.45915347711440446,
+            "exposure": 0.5497262773722628,
+            "max_drawdown": -0.6484698539652521,
+            "n_periods": 2192,
+            "n_trades": 115,
+            "sharpe": 1.1092845902929476,
+            "total_return": 8.647203015741363,
+            "turnover": 230.0,
+            "unavailable": {},
+            "volatility": 0.4189527910667685
+          },
+          "10": {
+            "cagr": 0.4040874790356066,
+            "exposure": 0.5497262773722628,
+            "max_drawdown": -0.6670715799083076,
+            "n_periods": 2192,
+            "n_trades": 115,
+            "sharpe": 1.016967949579156,
+            "total_return": 6.659164254755738,
+            "turnover": 230.0,
+            "unavailable": {},
+            "volatility": 0.41932444154491183
+          },
+          "25": {
+            "cagr": 0.3252642043689668,
+            "exposure": 0.5497262773722628,
+            "max_drawdown": -0.6931764816355065,
+            "n_periods": 2192,
+            "n_trades": 115,
+            "sharpe": 0.8784803409571915,
+            "total_return": 4.415797887314018,
+            "turnover": 230.0,
+            "unavailable": {},
+            "volatility": 0.42003442060860435
+          },
+          "5": {
+            "cagr": 0.4313626046744431,
+            "exposure": 0.5497262773722628,
+            "max_drawdown": -0.6578947838568915,
+            "n_periods": 2192,
+            "n_trades": 115,
+            "sharpe": 1.0631316443574335,
+            "total_return": 7.596149816871998,
+            "turnover": 230.0,
+            "unavailable": {},
+            "volatility": 0.4191284294126983
+          }
+        },
+        "momentum": {
+          "0": {
+            "cagr": 0.45915347711440446,
+            "exposure": 0.5497262773722628,
+            "max_drawdown": -0.6484698539652521,
+            "n_periods": 2192,
+            "n_trades": 115,
+            "sharpe": 1.1092845902929476,
+            "total_return": 8.647203015741363,
+            "turnover": 230.0,
+            "unavailable": {},
+            "volatility": 0.4189527910667685
+          },
+          "10": {
+            "cagr": 0.4040874790356066,
+            "exposure": 0.5497262773722628,
+            "max_drawdown": -0.6670715799083076,
+            "n_periods": 2192,
+            "n_trades": 115,
+            "sharpe": 1.016967949579156,
+            "total_return": 6.659164254755738,
+            "turnover": 230.0,
+            "unavailable": {},
+            "volatility": 0.41932444154491183
+          },
+          "25": {
+            "cagr": 0.3252642043689668,
+            "exposure": 0.5497262773722628,
+            "max_drawdown": -0.6931764816355065,
+            "n_periods": 2192,
+            "n_trades": 115,
+            "sharpe": 0.8784803409571915,
+            "total_return": 4.415797887314018,
+            "turnover": 230.0,
+            "unavailable": {},
+            "volatility": 0.42003442060860435
+          },
+          "5": {
+            "cagr": 0.4313626046744431,
+            "exposure": 0.5497262773722628,
+            "max_drawdown": -0.6578947838568915,
+            "n_periods": 2192,
+            "n_trades": 115,
+            "sharpe": 1.0631316443574335,
+            "total_return": 7.596149816871998,
+            "turnover": 230.0,
+            "unavailable": {},
+            "volatility": 0.4191284294126983
+          }
+        }
+      }
+    },
+    "SPY": {
+      "date_end": "2025-12-31",
+      "date_start": "2020-01-02",
+      "filtered_minus_momentum": {
+        "0": {
+          "cagr": 0.0,
+          "max_drawdown": 0.0,
+          "sharpe": 0.0,
+          "total_return": 0.0
+        },
+        "10": {
+          "cagr": 0.0,
+          "max_drawdown": 0.0,
+          "sharpe": 0.0,
+          "total_return": 0.0
+        },
+        "25": {
+          "cagr": 0.0,
+          "max_drawdown": 0.0,
+          "sharpe": 0.0,
+          "total_return": 0.0
+        },
+        "5": {
+          "cagr": 0.0,
+          "max_drawdown": 0.0,
+          "sharpe": 0.0,
+          "total_return": 0.0
+        }
+      },
+      "forecast": {
+        "available": 1507,
+        "brier": {
+          "historical_frequency": 0.44110081886328445,
+          "markov": 0.23448954279834464,
+          "persistence": 0.28002654280026545
+        },
+        "brier_definition": "Mean sum of squared class errors (range 0..2; lower is better)",
+        "by_current_state": {
+          "Bear": {
+            "available": 144,
+            "coverage": 1.0,
+            "opportunities": 144
+          },
+          "Bull": {
+            "available": 261,
+            "coverage": 1.0,
+            "opportunities": 261
+          },
+          "Sideways": {
+            "available": 1102,
+            "coverage": 1.0,
+            "opportunities": 1102
+          }
+        },
+        "coverage": 1.0,
+        "eligible": 1507,
+        "first_scored_decision": "2020-01-02",
+        "last_scored_decision": "2025-12-30",
+        "opportunities": 1507,
+        "unavailable": 0,
+        "unavailable_reason": null
+      },
+      "observations": 1508,
+      "periods_per_year": 252,
+      "strategies": {
+        "buy_and_hold": {
+          "0": {
+            "cagr": 0.14823959468021553,
+            "exposure": 0.9993368700265252,
+            "max_drawdown": -0.3371727209068468,
+            "n_periods": 1508,
+            "n_trades": 1,
+            "sharpe": 0.77190353262469,
+            "total_return": 1.2906353699609485,
+            "turnover": 2.0,
+            "unavailable": {},
+            "volatility": 0.20741312891936894
+          },
+          "10": {
+            "cagr": 0.14785503580799803,
+            "exposure": 0.9993368700265252,
+            "max_drawdown": -0.33717272090684647,
+            "n_periods": 1508,
+            "n_trades": 1,
+            "sharpe": 0.7702631950279322,
+            "total_return": 1.286039309200166,
+            "turnover": 2.0,
+            "unavailable": {},
+            "volatility": 0.20742093150793234
+          },
+          "25": {
+            "cagr": 0.14727771437596102,
+            "exposure": 0.9993368700265252,
+            "max_drawdown": -0.3371727209068468,
+            "n_periods": 1508,
+            "n_trades": 1,
+            "sharpe": 0.7677917475447763,
+            "total_return": 1.2791538720581817,
+            "turnover": 2.0,
+            "unavailable": {},
+            "volatility": 0.2074356538323365
+          },
+          "5": {
+            "cagr": 0.14804734741641126,
+            "exposure": 0.9993368700265252,
+            "max_drawdown": -0.3371727209068467,
+            "n_periods": 1508,
+            "n_trades": 1,
+            "sharpe": 0.7710840965432779,
+            "total_return": 1.2883367626472828,
+            "turnover": 2.0,
+            "unavailable": {},
+            "volatility": 0.2074168289675119
+          }
+        },
+        "filtered_momentum": {
+          "0": {
+            "cagr": 0.09196394697704906,
+            "exposure": 0.6956233421750663,
+            "max_drawdown": -0.2058047939723524,
+            "n_periods": 1508,
+            "n_trades": 58,
+            "sharpe": 0.7769828271631064,
+            "total_return": 0.6947185734993331,
+            "turnover": 116.0,
+            "unavailable": {},
+            "volatility": 0.12326899540979264
+          },
+          "10": {
+            "cagr": 0.07102087468284972,
+            "exposure": 0.6956233421750663,
+            "max_drawdown": -0.22161454956995785,
+            "n_periods": 1508,
+            "n_trades": 58,
+            "sharpe": 0.6187246987797047,
+            "total_return": 0.5089293581663534,
+            "turnover": 116.0,
+            "unavailable": {},
+            "volatility": 0.12346893104657017
+          },
+          "25": {
+            "cagr": 0.04031912328613126,
+            "exposure": 0.6956233421750663,
+            "max_drawdown": -0.24488606298259896,
+            "n_periods": 1508,
+            "n_trades": 58,
+            "sharpe": 0.38146295299587923,
+            "total_return": 0.26745078638175457,
+            "turnover": 116.0,
+            "unavailable": {},
+            "volatility": 0.12403918577652623
+          },
+          "5": {
+            "cagr": 0.08144433504638014,
+            "exposure": 0.6956233421750663,
+            "max_drawdown": -0.21374742115602707,
+            "n_periods": 1508,
+            "n_trades": 58,
+            "sharpe": 0.6978920507169666,
+            "total_return": 0.5991513135866617,
+            "turnover": 116.0,
+            "unavailable": {},
+            "volatility": 0.12335086031472994
+          }
+        },
+        "momentum": {
+          "0": {
+            "cagr": 0.09196394697704906,
+            "exposure": 0.6956233421750663,
+            "max_drawdown": -0.2058047939723524,
+            "n_periods": 1508,
+            "n_trades": 58,
+            "sharpe": 0.7769828271631064,
+            "total_return": 0.6947185734993331,
+            "turnover": 116.0,
+            "unavailable": {},
+            "volatility": 0.12326899540979264
+          },
+          "10": {
+            "cagr": 0.07102087468284972,
+            "exposure": 0.6956233421750663,
+            "max_drawdown": -0.22161454956995785,
+            "n_periods": 1508,
+            "n_trades": 58,
+            "sharpe": 0.6187246987797047,
+            "total_return": 0.5089293581663534,
+            "turnover": 116.0,
+            "unavailable": {},
+            "volatility": 0.12346893104657017
+          },
+          "25": {
+            "cagr": 0.04031912328613126,
+            "exposure": 0.6956233421750663,
+            "max_drawdown": -0.24488606298259896,
+            "n_periods": 1508,
+            "n_trades": 58,
+            "sharpe": 0.38146295299587923,
+            "total_return": 0.26745078638175457,
+            "turnover": 116.0,
+            "unavailable": {},
+            "volatility": 0.12403918577652623
+          },
+          "5": {
+            "cagr": 0.08144433504638014,
+            "exposure": 0.6956233421750663,
+            "max_drawdown": -0.21374742115602707,
+            "n_periods": 1508,
+            "n_trades": 58,
+            "sharpe": 0.6978920507169666,
+            "total_return": 0.5991513135866617,
+            "turnover": 116.0,
+            "unavailable": {},
+            "volatility": 0.12335086031472994
+          }
+        }
+      }
+    }
+  },
+  "evaluation_dependencies": {
+    "numpy": "2.5.3",
+    "pandas": "3.0.6",
+    "python": "3.13.5",
+    "yfinance": "1.7.0"
+  },
+  "manifest_sha256": "f18196b540cc0164e3fdbb039ca1c8798a9ba9152894c64e459af24229e509d6",
+  "protocol": {
+    "cash_return": 0,
+    "cost_bps": [
+      0,
+      5,
+      10,
+      25
+    ],
+    "cost_model": "cost_bps / 10000 * absolute exposure change, including entry and liquidation",
+    "development": {
+      "end": "2019-12-31",
+      "start": "2015-01-01"
+    },
+    "evaluation_kind": "Retrospective walk-forward; parameters fixed before evaluation",
+    "execution": "Decide at close t, fill at close t+1, earn t+1 to t+2; start flat, end liquidated",
+    "holdout": {
+      "end": "2025-12-31",
+      "start": "2020-01-01"
+    },
+    "main_cost_bps": 10,
+    "min_train": 252,
+    "threshold": 0.05,
+    "training_cutoff": "At t, transitions strictly inside labels[:t]; no future data",
+    "window": 20
+  },
+  "schema_version": 2,
+  "snapshot": {
+    "acquired_at_utc": "2026-09-28T04:59:17.444376+00:00",
+    "assets": {
+      "BTC-USD": {
+        "adjustment": "unadjusted_close",
+        "date_end": "2025-12-31",
+        "date_start": "2015-01-01",
+        "file": "BTC-USD.csv",
+        "periods_per_year": 365,
+        "rows": 4018,
+        "sha256": "234ec183c66f9301537493d86baf22ed95006ed6bb2537606c5942ccdbf129b9",
+        "source_url": "https://finance.yahoo.com/quote/BTC-USD/history/",
+        "ticker": "BTC-USD",
+        "unusually_long_gaps": [],
+        "yfinance_auto_adjust": false
+      },
+      "SPY": {
+        "adjustment": "dividend_and_split_adjusted",
+        "date_end": "2025-12-31",
+        "date_start": "2015-01-02",
+        "file": "SPY.csv",
+        "periods_per_year": 252,
+        "rows": 2766,
+        "sha256": "37566ba5aa8df19b0e9fc61ad6db40c3fa87bf7ad6283fa6b42efcb8866f8a04",
+        "source_url": "https://finance.yahoo.com/quote/SPY/history/",
+        "ticker": "SPY",
+        "unusually_long_gaps": [],
+        "yfinance_auto_adjust": true
+      }
+    },
+    "calendar_policy": "Preserve observed dates; no resampling or forward fill",
+    "dependency_versions": {
+      "numpy": "2.5.3",
+      "pandas": "3.0.6",
+      "python": "3.13.5",
+      "yfinance": "1.7.0"
+    },
+    "download_end_exclusive": "2026-01-01",
+    "requested_end_inclusive": "2025-12-31",
+    "requested_start": "2015-01-01",
+    "snapshot_schema_version": "1.0",
+    "source": "Yahoo Finance daily history via yfinance"
+  }
+}

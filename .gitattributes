@@ -1,0 +1,2 @@
+# Frozen-data and result hashes must survive Windows/Linux checkouts unchanged.
+* text=auto eol=lf

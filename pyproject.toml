@@ -1,0 +1,20 @@
+[project]
+name = "markov-hedge-fund-method"
+version = "2.0.0"
+description = "Observable Markov regime analysis and reproducible research"
+requires-python = ">=3.10"
+dependencies = ["numpy", "pandas", "yfinance"]
+
+[project.optional-dependencies]
+hmm = ["hmmlearn"]
+
+[dependency-groups]
+dev = ["pytest>=8,<10"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".", "scripts"]
+addopts = "-ra"

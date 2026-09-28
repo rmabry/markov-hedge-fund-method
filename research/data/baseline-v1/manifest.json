@@ -1,0 +1,43 @@
+{
+  "acquired_at_utc": "2026-09-28T04:59:17.444376+00:00",
+  "assets": {
+    "BTC-USD": {
+      "adjustment": "unadjusted_close",
+      "date_end": "2025-12-31",
+      "date_start": "2015-01-01",
+      "file": "BTC-USD.csv",
+      "periods_per_year": 365,
+      "rows": 4018,
+      "sha256": "234ec183c66f9301537493d86baf22ed95006ed6bb2537606c5942ccdbf129b9",
+      "source_url": "https://finance.yahoo.com/quote/BTC-USD/history/",
+      "ticker": "BTC-USD",
+      "unusually_long_gaps": [],
+      "yfinance_auto_adjust": false
+    },
+    "SPY": {
+      "adjustment": "dividend_and_split_adjusted",
+      "date_end": "2025-12-31",
+      "date_start": "2015-01-02",
+      "file": "SPY.csv",
+      "periods_per_year": 252,
+      "rows": 2766,
+      "sha256": "37566ba5aa8df19b0e9fc61ad6db40c3fa87bf7ad6283fa6b42efcb8866f8a04",
+      "source_url": "https://finance.yahoo.com/quote/SPY/history/",
+      "ticker": "SPY",
+      "unusually_long_gaps": [],
+      "yfinance_auto_adjust": true
+    }
+  },
+  "calendar_policy": "Preserve observed dates; no resampling or forward fill",
+  "dependency_versions": {
+    "numpy": "2.5.3",
+    "pandas": "3.0.6",
+    "python": "3.13.5",
+    "yfinance": "1.7.0"
+  },
+  "download_end_exclusive": "2026-01-01",
+  "requested_end_inclusive": "2025-12-31",
+  "requested_start": "2015-01-01",
+  "snapshot_schema_version": "1.0",
+  "source": "Yahoo Finance daily history via yfinance"
+}

@@ -1,0 +1,13 @@
+.venv/
+.venv310/
+.python-runtimes/
+.uv-cache/
+.pytest_cache/
+.pytest-core-*/
+pytest-cache-files-*/
+research/.pytest-*/
+__pycache__/
+*.py[cod]
+.coverage
+htmlcov/
+.test-tmp/
