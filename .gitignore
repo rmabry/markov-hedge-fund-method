@@ -4,6 +4,7 @@
 .uv-cache/
 .pytest_cache/
 .pytest-core-*/
+.pytest-signal-audit-*/
 pytest-cache-files-*/
 research/.pytest-*/
 __pycache__/

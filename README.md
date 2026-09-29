@@ -81,6 +81,23 @@ buy-and-hold, positive 20-bar momentum, and momentum gated by the Markov score,
 using long-or-cash exposure and predeclared costs. See the
 [research report](research/results/baseline-v1/report.md) for results and limitations.
 
+The [follow-up signal audit](research/INFORMATION_VALUE_DECISION.md) explains why
+the filter changed no trades: its score was positive on every momentum-long
+decision. Most next-regime Brier improvement was also available from fixed
+pre-2020 transition rows. The current evidence supports a descriptive research
+tool; incremental trading value remains unproven. A single
+[prospective sizing experiment](research/NEXT_EXPERIMENT.md) is specified before
+its evaluation period.
+
+Reproduce the audit from the same frozen inputs, entirely offline:
+
+```bash
+uv run --locked --offline python scripts/signal_audit.py
+```
+
+Outputs are in `research/results/information-audit-v1/`; baseline results are
+preserved.
+
 ## Tests and release evidence
 
 ```bash

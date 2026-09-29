@@ -1,0 +1,165 @@
+{
+  "schema_version": 1,
+  "experiment_id": "adaptive-sizing-v1",
+  "status": "specified_not_started",
+  "specification_date": "2026-09-28",
+  "preregister_before": "2026-10-01",
+  "initial_input": {
+    "start": "2015-01-01",
+    "end_inclusive": "2026-09-30",
+    "acquire_after_preregistration_and_completed_final_bars": true,
+    "freeze_before_first_evaluation_close_and_evaluation_price_ingestion": true,
+    "contiguous_single_vintage_per_asset": true,
+    "frozen_matrix": "build_transition_matrix(labels_through_2026_09_30.iloc[:-1])"
+  },
+  "evaluation": {
+    "start": "2026-10-01",
+    "end_inclusive": "2027-09-30",
+    "terminal_analysis_only": true,
+    "interim_performance_inspection": false,
+    "automatic_extension": false,
+    "live_trading": false
+  },
+  "prospective_data": {
+    "each_decision_input": "archived as-of full prefix from 2015-01-01 through the completed decision bar, single coherent vintage per asset",
+    "adaptive_update": "recompute labels and strict-prefix counts from that available prefix",
+    "fixed_matrix_update": "never",
+    "decision_record_deadline": "strictly before the next observed close at which it would fill",
+    "required_record_fields": [
+      "asset", "decision_bar_date", "bar_completed_at_utc", "acquired_at_utc",
+      "raw_source_sha256", "normalized_prefix_sha256", "current_regime",
+      "adaptive_probabilities", "fixed_matrix_sha256", "availability",
+      "adaptive_target", "fixed_target", "momentum_target",
+      "source_commit", "dependency_versions", "decision_recorded_at_utc"
+    ],
+    "return_ending_at_t": "close[t] / close[previous_observation] - 1, both from the archived vintage available when t completes",
+    "return_record": "record both source prices, vintage hash and computed return once; do not rewrite from later revisions",
+    "mixed_vintage_adjusted_level_splicing": false,
+    "past_decision_revisions": false,
+    "end_of_year_reconstruction_sufficient": false,
+    "late_or_missing_decision_target": 0,
+    "explicitly_unavailable_decisions": "retain as cash and count against the 95% coverage gate; not automatically invalid",
+    "missing_as_of_evidence_invalidates": "claimed available forecast or scored return",
+    "report_historical_source_revisions": true
+  },
+  "assets": {
+    "SPY": {
+      "adjustment": "dividend_and_split_adjusted",
+      "periods_per_year": 252,
+      "minimum_paired_return_observations": 200,
+      "bootstrap_seed": 2026092801
+    },
+    "BTC-USD": {
+      "adjustment": "unadjusted_close",
+      "periods_per_year": 365,
+      "minimum_paired_return_observations": 300,
+      "bootstrap_seed": 2026092802
+    }
+  },
+  "method": {
+    "window": 20,
+    "threshold": 0.05,
+    "boundary_tolerance": 1e-12,
+    "min_train": 252,
+    "return_type": "simple",
+    "training_cutoff": "transitions strictly inside labels[:t]",
+    "adaptive_target": "momentum_positive * clip(adaptive_bull_probability - adaptive_bear_probability, 0, 1)",
+    "fixed_target": "momentum_positive * clip(frozen_bull_probability - frozen_bear_probability, 0, 1)",
+    "descriptive_reference": "momentum_positive",
+    "unavailable_target": 0,
+    "execution": "decision at close t; fill at close t+1; earn t+1 to t+2",
+    "initial_position": 0,
+    "terminal_liquidation": true,
+    "cash_return": 0,
+    "primary_cost_bps": 10,
+    "sensitivity_cost_bps": [0, 5, 25],
+    "cost_basis": "cost rate times absolute actual traded value after accounting for passive weight drift and post-cost target equity",
+    "calendar_cagr_days_per_year": 365.2425
+  },
+  "prospective_accounting": {
+    "implementation_status": "future_implementation_required_before_activation",
+    "applies_to": ["adaptive", "fixed_state", "momentum_reference"],
+    "target_definition": "risky-asset fraction of post-transaction-cost equity",
+    "inputs": "E_prev prior post-cost equity; q_prev prior post-cost risky weight; r newly observed asset return; q delayed target; c cost_bps/10000",
+    "pretrade_equity": "E_before = E_prev*(1+q_prev*r)",
+    "pretrade_holdings": "H_before = E_prev*q_prev*(1+r)",
+    "drifted_weight": "H_before/E_before",
+    "post_cost_equity_buy_or_equal": "if q*E_before >= H_before: E_after = (E_before+c*H_before)/(1+c*q)",
+    "post_cost_equity_sell": "if q*E_before < H_before: E_after = (E_before-c*H_before)/(1-c*q)",
+    "signed_traded_value": "q*E_after-H_before",
+    "transaction_cost_value": "c*abs(signed_traded_value)",
+    "turnover": "abs(signed_traded_value)/E_before",
+    "gross_return": "q_prev*r",
+    "cost_fraction_of_prior_equity": "transaction_cost_value/E_prev",
+    "net_return": "E_after/E_prev-1",
+    "next_weight": "q",
+    "initial_equity": 1,
+    "initial_weight": 0,
+    "force_terminal_target": 0,
+    "preserve_v2_ledger_and_results": true,
+    "hand_fixture": {
+      "prior_equity": 1,
+      "prior_weight": 0.5,
+      "asset_return": 0.1,
+      "target": 0.5,
+      "cost_rate": 0.001,
+      "expected_pretrade_equity": 1.05,
+      "expected_drifted_weight": 0.5238095238095238,
+      "expected_transaction_cost_value": 0.00002501250625312656,
+      "expected_post_cost_equity": 1.0499749874937469,
+      "absolute_tolerance": 1e-12
+    },
+    "required_activation_tests": [
+      "constant_fraction_drift_hand_fixture", "self_financing_cash_and_equity_conservation",
+      "zero_cost_equivalence", "all_cash_holding", "fully_invested_holding",
+      "nonnegative_cash_and_holdings", "entry_exit_costs",
+      "causal_delay", "terminal_liquidation"
+    ]
+  },
+  "primary_endpoint": {
+    "definition": "periods_per_year * mean(adaptive_net_return - fixed_net_return)",
+    "per_asset_separate": true,
+    "pooled_asset_inference": false,
+    "all_evaluation_periods_included": true,
+    "practical_minimum": 0.005
+  },
+  "bootstrap": {
+    "method": "paired_circular_moving_block",
+    "block_length_observations": 20,
+    "resamples": 10000,
+    "generator": "numpy.random.Generator(numpy.random.PCG64(seed))",
+    "block_starts": "ceil(n/20) iid uniform integers from 0 through n-1 per replicate",
+    "indices": "20 consecutive indices modulo n per block; concatenate and truncate to n",
+    "interval_quantiles": [0.025, 0.975],
+    "quantile_method": "linear"
+  },
+  "adequacy": {
+    "minimum_joint_forecast_coverage": 0.95,
+    "coverage_opportunities": "decisions feeding fills before terminal liquidation, including initialization",
+    "minimum_material_exposure_difference": 0.01,
+    "minimum_material_difference_observations_per_asset": 40,
+    "minimum_distinct_material_difference_blocks_per_asset": 6,
+    "material_difference_block_length": 20,
+    "material_difference_block_origin": "first evaluation row; final partial block counts",
+    "qualifying_blocks_need_not_be_adjacent": true,
+    "unresolved_data_defects_allowed": false
+  },
+  "decision": {
+    "precedence": ["inconclusive_first", "do_not_advance", "advance", "otherwise"],
+    "inconclusive_first": "any adequacy gate fails",
+    "advance": "for both assets: primary_endpoint >= 0.005 AND lower_interval > 0 AND drawdown_difference >= -0.02",
+    "do_not_advance": "after adequacy passes: any asset upper_interval < 0.005 OR drawdown_difference < -0.02",
+    "otherwise": "inconclusive",
+    "drawdown_difference": "max_drawdown_adaptive - max_drawdown_fixed",
+    "secondary_metrics_cannot_override": true
+  },
+  "existing_references": {
+    "scope": "pins model, forecast cutoff, timing and metric definitions; prospective self-financing cost implementation is future work",
+    "source_commit": "3d077ae7ce9b3ab0246f3962daf937331bc565fe",
+    "scripts/markov_regime.py": "08a6b2f84b569cfa36f59ad8cf160a3b3265e1d28d5cabd8e5423cdd420b8088",
+    "uv.lock": "4c5424a79bdd76c9b3e290ec42e8e35e350e93ab740b1b73c3572a20d7008af8",
+    "research/data/baseline-v1/manifest.json": "f18196b540cc0164e3fdbb039ca1c8798a9ba9152894c64e459af24229e509d6",
+    "research/data/baseline-v1/SPY.csv": "37566ba5aa8df19b0e9fc61ad6db40c3fa87bf7ad6283fa6b42efcb8866f8a04",
+    "research/data/baseline-v1/BTC-USD.csv": "234ec183c66f9301537493d86baf22ed95006ed6bb2537606c5942ccdbf129b9"
+  }
+}

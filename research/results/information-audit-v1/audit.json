@@ -1,0 +1,480 @@
+{
+  "assets": {
+    "BTC-USD": {
+      "date_end": "2025-12-31",
+      "date_start": "2020-01-01",
+      "decisions": {
+        "available": 2192,
+        "by_state": {
+          "Bear": {
+            "available": 567,
+            "eligible": 567,
+            "filter_vetoes": 0,
+            "ineligible": 0,
+            "momentum_long": 0,
+            "negative_scores": 567,
+            "observations": 567,
+            "positive_scores": 0,
+            "score_summary": {
+              "max": -0.8568790397045245,
+              "mean": -0.8689238654335912,
+              "median": -0.8688293370944993,
+              "min": -0.88,
+              "q05": -0.8763315393476852,
+              "q95": -0.8594740762150385,
+              "std": 0.004807470650297213
+            },
+            "unavailable": 0,
+            "zero_scores": 0
+          },
+          "Bull": {
+            "available": 836,
+            "eligible": 836,
+            "filter_vetoes": 0,
+            "ineligible": 0,
+            "momentum_long": 836,
+            "negative_scores": 0,
+            "observations": 836,
+            "positive_scores": 836,
+            "score_summary": {
+              "max": 0.9159763313609467,
+              "mean": 0.9048308723960328,
+              "median": 0.9023011329918837,
+              "min": 0.8960692871419054,
+              "q05": 0.8970639310737873,
+              "q95": 0.9145154932556507,
+              "std": 0.00652254399975194
+            },
+            "unavailable": 0,
+            "zero_scores": 0
+          },
+          "Sideways": {
+            "available": 789,
+            "eligible": 789,
+            "filter_vetoes": 0,
+            "ineligible": 0,
+            "momentum_long": 369,
+            "negative_scores": 0,
+            "observations": 789,
+            "positive_scores": 789,
+            "score_summary": {
+              "max": 0.03436988543371522,
+              "mean": 0.021866566323817813,
+              "median": 0.02167182662538701,
+              "min": 0.010288065843621408,
+              "q05": 0.015088261072005693,
+              "q95": 0.02766507388576189,
+              "std": 0.004050269930189338
+            },
+            "unavailable": 0,
+            "zero_scores": 0
+          }
+        },
+        "eligible": 2192,
+        "filter_vetoes": 0,
+        "filtered_long": 1205,
+        "ineligible": 0,
+        "momentum_long": 1205,
+        "observations": 2192,
+        "positive_score_while_momentum_cash": 420,
+        "same_sign_as_non_bear_rule": true,
+        "sign_comparison_observations": 2192,
+        "target_mismatches": 0,
+        "unavailable": 0,
+        "unlabeled": 0,
+        "veto_reasons": {
+          "ineligible": 0,
+          "negative_score": 0,
+          "unavailable_score": 0,
+          "zero_score": 0
+        }
+      },
+      "execution": {
+        "all_cost_cases_identical": true,
+        "cost_cases": {
+          "0": {
+            "identical": true,
+            "max_absolute_equity_difference": 0.0,
+            "max_absolute_net_return_difference": 0.0,
+            "net_return_mismatches": 0,
+            "position_mismatches": 0
+          },
+          "10": {
+            "identical": true,
+            "max_absolute_equity_difference": 0.0,
+            "max_absolute_net_return_difference": 0.0,
+            "net_return_mismatches": 0,
+            "position_mismatches": 0
+          },
+          "25": {
+            "identical": true,
+            "max_absolute_equity_difference": 0.0,
+            "max_absolute_net_return_difference": 0.0,
+            "net_return_mismatches": 0,
+            "position_mismatches": 0
+          },
+          "5": {
+            "identical": true,
+            "max_absolute_equity_difference": 0.0,
+            "max_absolute_net_return_difference": 0.0,
+            "net_return_mismatches": 0,
+            "position_mismatches": 0
+          }
+        },
+        "pre_evaluation_decision_date": "2019-12-31",
+        "pre_evaluation_decision_identical": true,
+        "pre_evaluation_filtered_momentum": 0.0,
+        "pre_evaluation_momentum": 0.0
+      },
+      "forecasts": {
+        "all_markov_available": {
+          "brier": {
+            "historical_frequency": 0.6646354540223972,
+            "markov": 0.28725500859846925,
+            "persistence": 0.3377453217708809
+          },
+          "observations": 2191
+        },
+        "brier_definition": "Mean sum of squared class errors, range 0..2; lower is better",
+        "by_realized_transition": {
+          "changed": {
+            "brier": {
+              "historical_frequency": 0.7035539114229508,
+              "markov": 1.4901845811812684,
+              "persistence": 2.0
+            },
+            "observations": 370
+          },
+          "unchanged": {
+            "brier": {
+              "historical_frequency": 0.6567278047976828,
+              "markov": 0.042837687425687394,
+              "persistence": 0.0
+            },
+            "observations": 1821
+          }
+        },
+        "eligible": 2191,
+        "frozen_development": {
+          "date_end": "2019-12-31",
+          "date_start": "2015-01-21",
+          "labels": 1806,
+          "transition_matrix": [
+            [
+              0.8897485493230174,
+              0.09284332688588008,
+              0.017408123791102514
+            ],
+            [
+              0.11180124223602485,
+              0.7660455486542443,
+              0.12215320910973085
+            ],
+            [
+              0.002484472049689441,
+              0.08198757763975155,
+              0.915527950310559
+            ]
+          ],
+          "transitions": 1805
+        },
+        "grouping_warning": "Changed/unchanged is an ex-post outcome decomposition, not a tradable feature",
+        "markov_available": 2191,
+        "markov_unavailable": 0,
+        "matched_with_frozen_development": {
+          "brier": {
+            "frozen_development": 0.2881141000692739,
+            "historical_frequency": 0.6646354540223972,
+            "markov": 0.28725500859846925,
+            "persistence": 0.3377453217708809
+          },
+          "excluded_missing_frozen_row": 0,
+          "observations": 2191,
+          "unavailable_reason": null
+        },
+        "opportunities": 2191
+      },
+      "interpretation": "On these inspected dates the learned score was negative in Bear and positive in Sideways/Bull. Positive 20-bar momentum cannot be Bear under the +/-5% labels. The positive-score gate therefore vetoed no positive-momentum decisions and was empirically redundant for this policy. This sign pattern is observed, not guaranteed for other histories or future dates."
+    },
+    "SPY": {
+      "date_end": "2025-12-31",
+      "date_start": "2020-01-02",
+      "decisions": {
+        "available": 1508,
+        "by_state": {
+          "Bear": {
+            "available": 144,
+            "eligible": 144,
+            "filter_vetoes": 0,
+            "ineligible": 0,
+            "momentum_long": 0,
+            "negative_scores": 144,
+            "observations": 144,
+            "positive_scores": 0,
+            "score_summary": {
+              "max": -0.7763157894736842,
+              "mean": -0.8021143161475659,
+              "median": -0.80175983436853,
+              "min": -0.8229166666666666,
+              "q05": -0.8151257938446507,
+              "q95": -0.7884615384615384,
+              "std": 0.008721689484353177
+            },
+            "unavailable": 0,
+            "zero_scores": 0
+          },
+          "Bull": {
+            "available": 261,
+            "eligible": 261,
+            "filter_vetoes": 0,
+            "ineligible": 0,
+            "momentum_long": 261,
+            "negative_scores": 0,
+            "observations": 261,
+            "positive_scores": 261,
+            "score_summary": {
+              "max": 0.7647058823529411,
+              "mean": 0.732419839478526,
+              "median": 0.7368421052631579,
+              "min": 0.7035830618892508,
+              "q05": 0.7060702875399361,
+              "q95": 0.75,
+              "std": 0.014838989489871071
+            },
+            "unavailable": 0,
+            "zero_scores": 0
+          },
+          "Sideways": {
+            "available": 1103,
+            "eligible": 1103,
+            "filter_vetoes": 0,
+            "ineligible": 0,
+            "momentum_long": 789,
+            "negative_scores": 0,
+            "observations": 1103,
+            "positive_scores": 1103,
+            "score_summary": {
+              "max": 0.027578599007170437,
+              "mean": 0.02043467642606483,
+              "median": 0.021406727828746176,
+              "min": 0.0035555555555555583,
+              "q05": 0.008742023505803033,
+              "q95": 0.02692392615547248,
+              "std": 0.005586976376098498
+            },
+            "unavailable": 0,
+            "zero_scores": 0
+          }
+        },
+        "eligible": 1508,
+        "filter_vetoes": 0,
+        "filtered_long": 1050,
+        "ineligible": 0,
+        "momentum_long": 1050,
+        "observations": 1508,
+        "positive_score_while_momentum_cash": 314,
+        "same_sign_as_non_bear_rule": true,
+        "sign_comparison_observations": 1508,
+        "target_mismatches": 0,
+        "unavailable": 0,
+        "unlabeled": 0,
+        "veto_reasons": {
+          "ineligible": 0,
+          "negative_score": 0,
+          "unavailable_score": 0,
+          "zero_score": 0
+        }
+      },
+      "execution": {
+        "all_cost_cases_identical": true,
+        "cost_cases": {
+          "0": {
+            "identical": true,
+            "max_absolute_equity_difference": 0.0,
+            "max_absolute_net_return_difference": 0.0,
+            "net_return_mismatches": 0,
+            "position_mismatches": 0
+          },
+          "10": {
+            "identical": true,
+            "max_absolute_equity_difference": 0.0,
+            "max_absolute_net_return_difference": 0.0,
+            "net_return_mismatches": 0,
+            "position_mismatches": 0
+          },
+          "25": {
+            "identical": true,
+            "max_absolute_equity_difference": 0.0,
+            "max_absolute_net_return_difference": 0.0,
+            "net_return_mismatches": 0,
+            "position_mismatches": 0
+          },
+          "5": {
+            "identical": true,
+            "max_absolute_equity_difference": 0.0,
+            "max_absolute_net_return_difference": 0.0,
+            "net_return_mismatches": 0,
+            "position_mismatches": 0
+          }
+        },
+        "pre_evaluation_decision_date": "2019-12-31",
+        "pre_evaluation_decision_identical": true,
+        "pre_evaluation_filtered_momentum": 1.0,
+        "pre_evaluation_momentum": 1.0
+      },
+      "forecasts": {
+        "all_markov_available": {
+          "brier": {
+            "historical_frequency": 0.44110081886328445,
+            "markov": 0.23448954279834464,
+            "persistence": 0.28002654280026545
+          },
+          "observations": 1507
+        },
+        "brier_definition": "Mean sum of squared class errors, range 0..2; lower is better",
+        "by_realized_transition": {
+          "changed": {
+            "brier": {
+              "historical_frequency": 0.761317743595379,
+              "markov": 1.4799996047094792,
+              "persistence": 2.0
+            },
+            "observations": 211
+          },
+          "unchanged": {
+            "brier": {
+              "historical_frequency": 0.38896673621014255,
+              "markov": 0.03170974105201025,
+              "persistence": 0.0
+            },
+            "observations": 1296
+          }
+        },
+        "eligible": 1507,
+        "frozen_development": {
+          "date_end": "2019-12-31",
+          "date_start": "2015-02-02",
+          "labels": 1238,
+          "transition_matrix": [
+            [
+              0.7945205479452054,
+              0.2054794520547945,
+              0.0
+            ],
+            [
+              0.013837638376383764,
+              0.9658671586715867,
+              0.02029520295202952
+            ],
+            [
+              0.0,
+              0.275,
+              0.725
+            ]
+          ],
+          "transitions": 1237
+        },
+        "grouping_warning": "Changed/unchanged is an ex-post outcome decomposition, not a tradable feature",
+        "markov_available": 1507,
+        "markov_unavailable": 0,
+        "matched_with_frozen_development": {
+          "brier": {
+            "frozen_development": 0.23622692020882952,
+            "historical_frequency": 0.44110081886328445,
+            "markov": 0.23448954279834464,
+            "persistence": 0.28002654280026545
+          },
+          "excluded_missing_frozen_row": 0,
+          "observations": 1507,
+          "unavailable_reason": null
+        },
+        "opportunities": 1507
+      },
+      "interpretation": "On these inspected dates the learned score was negative in Bear and positive in Sideways/Bull. Positive 20-bar momentum cannot be Bear under the +/-5% labels. The positive-score gate therefore vetoed no positive-momentum decisions and was empirically redundant for this policy. This sign pattern is observed, not guaranteed for other histories or future dates."
+    }
+  },
+  "baseline_commit": "3d077ae7ce9b3ab0246f3962daf937331bc565fe",
+  "limits": [
+    "The inspected 2020-2025 period is not an untouched holdout for selecting another rule.",
+    "A lower regime Brier score does not establish a useful forecast of an executable price return.",
+    "Regimes use overlapping trailing 20-bar returns; next-state persistence is partly mechanical.",
+    "The frozen-development state-conditioned table is an added diagnostic, not a preregistered original comparator.",
+    "No returns of newly selected strategies are evaluated here; no future profitability is established.",
+    "Yahoo adjusted prices are retrospective and may contain later source revisions, not point-in-time vendor data."
+  ],
+  "protocol": {
+    "cost_bps": [
+      0,
+      5,
+      10,
+      25
+    ],
+    "end": "2025-12-31",
+    "execution": "Decision t, fill t+1, earn return ending t+2; initial flat and terminal liquidation",
+    "min_train": 252,
+    "start": "2020-01-01",
+    "threshold": 0.05,
+    "training": "Transitions strictly within labels[:t] before the decision date",
+    "window": 20
+  },
+  "provenance": {
+    "dependency_versions": {
+      "numpy": "2.5.3",
+      "pandas": "3.0.6",
+      "python": "3.13.5",
+      "yfinance": "1.7.0"
+    },
+    "manifest_sha256": "f18196b540cc0164e3fdbb039ca1c8798a9ba9152894c64e459af24229e509d6",
+    "snapshot": {
+      "acquired_at_utc": "2026-09-28T04:59:17.444376+00:00",
+      "assets": {
+        "BTC-USD": {
+          "adjustment": "unadjusted_close",
+          "date_end": "2025-12-31",
+          "date_start": "2015-01-01",
+          "file": "BTC-USD.csv",
+          "periods_per_year": 365,
+          "rows": 4018,
+          "sha256": "234ec183c66f9301537493d86baf22ed95006ed6bb2537606c5942ccdbf129b9",
+          "source_url": "https://finance.yahoo.com/quote/BTC-USD/history/",
+          "ticker": "BTC-USD",
+          "unusually_long_gaps": [],
+          "yfinance_auto_adjust": false
+        },
+        "SPY": {
+          "adjustment": "dividend_and_split_adjusted",
+          "date_end": "2025-12-31",
+          "date_start": "2015-01-02",
+          "file": "SPY.csv",
+          "periods_per_year": 252,
+          "rows": 2766,
+          "sha256": "37566ba5aa8df19b0e9fc61ad6db40c3fa87bf7ad6283fa6b42efcb8866f8a04",
+          "source_url": "https://finance.yahoo.com/quote/SPY/history/",
+          "ticker": "SPY",
+          "unusually_long_gaps": [],
+          "yfinance_auto_adjust": true
+        }
+      },
+      "calendar_policy": "Preserve observed dates; no resampling or forward fill",
+      "dependency_versions": {
+        "numpy": "2.5.3",
+        "pandas": "3.0.6",
+        "python": "3.13.5",
+        "yfinance": "1.7.0"
+      },
+      "download_end_exclusive": "2026-01-01",
+      "requested_end_inclusive": "2025-12-31",
+      "requested_start": "2015-01-01",
+      "snapshot_schema_version": "1.0",
+      "source": "Yahoo Finance daily history via yfinance"
+    },
+    "source_sha256": {
+      "scripts/markov_regime.py": "08a6b2f84b569cfa36f59ad8cf160a3b3265e1d28d5cabd8e5423cdd420b8088",
+      "scripts/research_evaluation.py": "2257e1c1ea0622c3c0cba7eac54088be2f000fef1fbf6904f70fe88a7e4ece30",
+      "scripts/signal_audit.py": "af8a60e9f2c8887b1d27ea115d82c65423a2ea0dda4c1aea220a47170a743df2"
+    },
+    "validated_baseline_result_sha256": "6a73e6f75a7873b3c95f1da9c21623839977e68f00ff9b169bb95abc79b4e2c2"
+  },
+  "schema_version": 1,
+  "study_kind": "Post-evaluation diagnostic; not an untouched holdout"
+}
